@@ -7,12 +7,13 @@
 # view_navigation.launch: observe the map in rviz
 # keyboard_teleop.launch: manually control the robot with keyboard commands
 
-echo "Hello"
+# echo "Hello"
 
 path_catkin_ws="/home/workspace/RoboND-Term1-P5-Home-Service-Robot/catkin_ws"
-echo "${path_catkin_ws}/src/turtlebot_simulator/turtlebot_gazebo/launch/turtlebot_world.launch"
+# echo "${path_catkin_ws}/src/turtlebot_simulator/turtlebot_gazebo/launch/turtlebot_world.launch"
+
+xterm -e "cd ${path_catkin_ws} && source devel/setup.bash && roslaunch turtlebot_gazebo turtlebot_world.launch"
 : '
-xterm -e "${path_catkin_ws}/src/turtlebot_simulator/turtlebot_gazebo/launch/turtlebot_world.launch" &
 sleep 5
 xterm -e "${path_catkin_ws}/src/turtlebot_simulator/turtlebot_gazebo/launch/gmapping_demo.launch" &
 sleep 5
