@@ -44,11 +44,16 @@ int main(int argc, char** argv){
     ac.waitForResult();
 
     // Check if the robot reached its goal
-    if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+    if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
       ROS_INFO("Goal reached!");
-    else
+
+      // Pause 5 seconds
+      sleep(5);
+    }
+    else {
       ROS_INFO("Goal cannot be reached!");
     }
+  }
 
   return 0;
 }

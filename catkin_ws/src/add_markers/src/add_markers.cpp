@@ -10,6 +10,7 @@ float y_odom = 0.0;
 void odometry_cb(const nav_msgs::Odometry::ConstPtr& msg) {
   ::x_odom = msg->pose.pose.position.x;
   ::y_odom = msg->pose.pose.position.y;
+  // ROS_INFO("In callback, current x_odom is %f, y_odom is %f", x_odom, y_odom);
 }
 
 int main( int argc, char** argv )
@@ -19,7 +20,7 @@ int main( int argc, char** argv )
   ros::Rate r(1);
   ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
   // Subscribe to odometry values
-  ros::Subscriber odometry_sub = n.subscribe("odom", 1000, odometry_cb);
+  ros::Subscriber odometry_sub = n.subscribe("/odom", 1000, odometry_cb);
   
   // Set our initial shape type to be a cube
   uint32_t shape = visualization_msgs::Marker::CUBE;
@@ -27,8 +28,20 @@ int main( int argc, char** argv )
   // Initialize step counter for demo
   uint32_t step_counter_demo = 0;
 
+  // Initialize distances and tolerance
+  float x_distance = 0.0;
+  float y_distance = 0.0;
+  float tolerance = 0.3;
+  float radius = 0.0;
+
+  // Publish 2 goals to reach and pause 5 seconds after reacing the pickup zone
+  // Define goals
+  int num_goals = 2;
+  int goals[num_goals][3] = { {2.0, 2.0, 1.0}, {-2.0, 3.0, 1.0} };
+
   // Initialize marker
   visualization_msgs::Marker marker;
+
   // Set the frame ID and timestamp.  See the TF tutorials for information on these.
   marker.header.frame_id = "map";
   marker.header.stamp = ros::Time::now();
@@ -85,13 +98,13 @@ int main( int argc, char** argv )
         marker.action = visualization_msgs::Marker::ADD;
 
         // Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
-        marker.pose.position.x = 1.0;
-        marker.pose.position.y = 0;
+        marker.pose.position.x = goals[0][0];
+        marker.pose.position.y = goals[0][1];
         marker.pose.position.z = 0;
         marker.pose.orientation.x = 0.0;
         marker.pose.orientation.y = 0.0;
         marker.pose.orientation.z = 0.0;
-        marker.pose.orientation.w = 1.0;
+        marker.pose.orientation.w = goals[0][2];
         
         // Publish marker
         marker_pub.publish(marker);
@@ -102,20 +115,29 @@ int main( int argc, char** argv )
       case 1:
         ROS_INFO("Waiting for robot to pick up object.");
 
-        // Pause 5 seconds
-        sleep(5);
+        // Pause 1 seconds
+        sleep(1);
 
         // Check distance between odometry and pick-up goal
         // If distance is within tolerance then move to next state, otherwise stays.
-        
-        // Move to next state
-        step_counter_demo = 2;
+        x_distance = fabs(marker.pose.position.x - x_odom);
+        y_distance = fabs(marker.pose.position.y - y_odom);
+        radius = sqrt(pow(x_distance, 2) + pow(x_distance, 2));
+        if (radius < tolerance) {
+          // Move to next state
+          step_counter_demo = 2;            
+        }
+        else {
+          // Do nothing
+        }
+        ROS_INFO("Current x_odom is %f, y_odom is %f", x_odom, y_odom);
+        ROS_INFO("Current radius is %f, tolerance is %f", radius, tolerance);
         break;
       case 2:
         ROS_INFO("Object was picked up.");
         ROS_INFO("Hiding object.");
-        // Pause 5 seconds
-        sleep(5);
+        // Pause 2 seconds
+        sleep(2);
 
         // Set the marker action.  Options are ADD, DELETE, and new in ROS Indigo: 3 (DELETEALL)
         marker.action = visualization_msgs::Marker::DELETE;
@@ -129,33 +151,42 @@ int main( int argc, char** argv )
       case 3:
         ROS_INFO("Waiting for robot to drop off object.");
 
-        // Pause 5 seconds
-        sleep(5);
+        // Pause 1 seconds
+        sleep(1);
 
         // Check distance between odometry and drop-off goal
         // If distance is within tolerance then move to next state, otherwise stays.
-        
-        // Move to next state
-        step_counter_demo = 4;
+        x_distance = fabs(goals[1][0] - x_odom);
+        y_distance = fabs(goals[1][1] - y_odom);
+        radius = sqrt(pow(x_distance, 2) + pow(x_distance, 2));
+        if (radius < tolerance) {
+          // Move to next state
+          step_counter_demo = 4;            
+        }
+        else {
+          // Do nothing
+        }
+        ROS_INFO("Current x_odom is %f, y_odom is %f", x_odom, y_odom);
+        ROS_INFO("Current radius is %f, tolerance is %f", radius, tolerance);
         break;
       case 4:
         ROS_INFO("Object was dropped off.");
         ROS_INFO("Placing object at the drop-off location.");
 
-        // Pause 5 seconds
-        sleep(5);
+        // Pause 2 seconds
+        sleep(2);
 
         // Set the marker action.  Options are ADD, DELETE, and new in ROS Indigo: 3 (DELETEALL)
         marker.action = visualization_msgs::Marker::ADD;
 
         // Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
-        marker.pose.position.x = 8.0;
-        marker.pose.position.y = 0.0;
+        marker.pose.position.x = goals[1][0];
+        marker.pose.position.y = goals[1][1];
         marker.pose.position.z = 0;
         marker.pose.orientation.x = 0.0;
         marker.pose.orientation.y = 0.0;
         marker.pose.orientation.z = 0.0;
-        marker.pose.orientation.w = 0.5;
+        marker.pose.orientation.w = goals[1][2];
 
         // Publish marker
         marker_pub.publish(marker);
@@ -191,6 +222,9 @@ int main( int argc, char** argv )
       break;
     }
     */
+
+    // Call single-threaded spinning
+    ros::spinOnce();
 
     r.sleep();
   }
