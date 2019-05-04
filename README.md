@@ -69,7 +69,7 @@ git clone https://github.com/turtlebot/turtlebot_simulator.git
 ```
 5. Build and run your code.  
 
-## [TODO]Project Description  
+## Project Description  
 Directory Structure  
 ```
 .Home-Sevice-Robot                                        # Home Service Robot Project
